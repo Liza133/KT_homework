@@ -42,6 +42,7 @@ def upload_file(file: UploadFile):
 
 
 
+
 @app.get("/download/{filename}")
 def download_file(filename: str, width: int = None, height: int = None):
     name = Path(filename).stem
