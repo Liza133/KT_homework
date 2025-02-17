@@ -6,6 +6,12 @@ from pathlib import Path
 
 from PIL import Image
 from moviepy import VideoFileClip
+import uuid
+
+from db import connection, table_creation, insert
+
+
+conn = connection()
 
 
 app = FastAPI()
@@ -16,16 +22,22 @@ def upload_file(file: UploadFile):
     extension = Path(file.filename).suffix
     if extension == '.jpg':
         path = f'images\\{file.filename}'
+        type = 'IMG'
         with open(path, "wb") as wf:
             shutil.copyfileobj(file.file, wf)
             file.file.close()  # удалаяет временный
     elif extension == '.mp4':
         path = f'videos\\{file.filename}'
+        type = 'VID'
         with open(path, "wb") as wf:
             shutil.copyfileobj(file.file, wf)
-            file.file.close()  # удалаяет временный
+            file.file.close()
     else:
         raise HTTPException(status_code=415)
+    # создаем табличку если еще не создана
+    table_creation(conn)
+    # insert-им в нее данные
+    insert(conn, str(uuid.uuid4()), path, type, file.size)
     return {"path": path}
 
 
@@ -59,6 +71,8 @@ def download_file(filename: str, width: int = None, height: int = None):
             return FileResponse(path=f'videos\\{filename}',
                                 media_type='application/octet-stream')
     raise HTTPException(status_code=404)
+
+
 
 
 
